@@ -4,29 +4,40 @@
 \alias{grottaBar}
 \title{grottaBar}
 \usage{
-grottaBar(x,groupName,scoreName,strataName = NULL,
-          colorScheme="lowGreen",
-          printNumbers = "count",
-          nCol = 1, dir = "v",
-          width = 0.9,
-          textSize = 15, numberSize = 5,
-          textFace = "plain",
-          textColor = "black", textCut = 0,
-          lineSize = 0.5,
-          returnData = FALSE,
-          ...
+grottaBar(
+  x,
+  groupName,
+  scoreName,
+  strataName = NULL,
+  colorScheme = "Blues",
+  colorScheme.reverse = FALSE,
+  printNumbers = "count",
+  nCol = 1,
+  dir = "v",
+  width = 0.9,
+  textSize = 15,
+  numberSize = 5,
+  textFace = "plain",
+  textColor = NULL,
+  lineSize = 0.5,
+  lineColor = "black",
+  drawLines = TRUE,
+  returnData = FALSE,
+  ...
 )
 }
 \arguments{
 \item{x}{a 2- or 3- dimensional table, returned by the table() function}
 
-\item{groupName}{a character string giving the name of the group varialble}
+\item{groupName}{a character string giving the name of the group variable}
 
-\item{scoreName}{a character string giving outcome (mRS) labels}
+\item{scoreName}{a character string giving outcome labels}
 
 \item{strataName}{a character string giving the strata variable name}
 
-\item{colorScheme}{a character string indicating the colors that should be used by the plot}
+\item{colorScheme}{a character string indicating the colors that should be used by the plot, or a discrete fill scale returned by ggplot2.}
+
+\item{colorScheme.reverse}{A logical indicating if the colour scheme should be reversed.}
 
 \item{printNumbers}{a character string indicating if numbers should be printed for each category.}
 
@@ -42,18 +53,23 @@ grottaBar(x,groupName,scoreName,strataName = NULL,
 
 \item{textFace}{a character string indicating font face of printed numbers. Can be "plain", "bold", "italic" or "bold.italic".}
 
-\item{textColor}{vector of two colors for text labels}
-
-\item{textCut}{Controls when the color of the text changes. The first \code{textCut} categories will use the first color}
+\item{textColor}{vector of colors for text labels}
 
 \item{lineSize}{a number indicating the thickness of lines in the plot}
+
+\item{lineColor}{vector color for lines in the plot}
+
+\item{drawLines}{boolean indicating if connecting lines should be drawn or not}
 
 \item{returnData}{a boolean indicating if the data used to create the plot should be returned. For expert users only.}
 
 \item{...}{additional arguments. Ignored except for \code{colourScheme} and \code{textColour} which will override their counterpart arguments.}
 }
 \value{
-A ggplot object, or a list containing a ggplot object and the data used to generate it.
+\describe{
+ \item{If \code{returnData} is \code{FALSE}}{A ggplot object}
+ \item{If \code{returnData} is \code{TRUE}}{A list containing a ggplot object and the data used to generate it}
+}
 }
 \description{
 Automates the production of a Grotta Bar using \code{ggplot()}
@@ -64,82 +80,130 @@ A Grotta bar chart is a common data visualisation tool in stroke research, and i
 chart showing the distribution of ordinal outcome data (typically the modified Rankin Scale) across groups, with lines drawn connecting
 categories across groups.
 
-The tool provides three default options for \code{colorScheme}:
-\itemize{
-    \item{\code{"lowGreen"}}{ A "traffic light" gradient from green to red, where low scores are colored green}
-    \item{\code{"lowRed"}}{ A "traffic light" gradient from red to green, where low scores are colored red}
-    \item{\code{"grayscale"}}{ A grayscale gradient for producing a black and white plot}
-}
+\code{colorScheme} supports all color schemes from ColorBrewer. See \url{https://colorbrewer2.org} for more information, or
+run \code{RColorBrewer::\link[RColorBrewer]{display.brewer.all}()} to display available options. If the number of categories
+exceeds what is provided by ColorBrewer, additional values are interpolated as needed.
 
-In addition to these, setting \code{colorScheme="custom"} allows for a
-user-specified color scheme by using the ggplot2 family of \code{scale_fill_} functions.
+In addition, setting colorScheme to a ggplot2 discrete scale (e.g. \code{ggplot2::\link[ggplot2]{scale_fill_brewer}()}) allows for a
+user-specified color scheme using the ggplot2 family of \code{scale_fill_} functions.
 
 The options for \code{printNumbers} are:
-\itemize{
-    \item{\code{"count"}}{ The raw counts in the table.}
-    \item{\code{"proportion"}}{ The within-group proportion, rounded to 2 decimal places.}
-    \item{\code{"percentage"}}{ The within-group percentage, rounded to 2 decimal places.}
-    \item{\code{"count.percentage"}}{ The raw count with percentage in parentheses.}
-    \item{\code{"none"}}{ Do not print any numbers.}
+\describe{
+\item{\code{count}}{ The raw counts in the table.}
+\item{\code{proportion}}{ The within-group proportion, rounded to 2 decimal places.}
+\item{\code{percentage}}{ The within-group percentage, rounded to 2 decimal places.}
+\item{\code{count.percentage}}{ The raw count with percentage in parentheses.}
+\item{\code{none}}{ Do not print any numbers.}
 }
 
 These options may be abbreviated. \code{"p"} is not a valid abbreviation as it matches to multiple options.
 The minimal abbreviation for \code{"count.percentage"} is \code{"c.p"}
 }
 \examples{
-
 df <- alteplase
-df$mRS <- df$mRS -1
+
 x <- table(mRS=df$mRS,
-           Group=df$treat,
-           Time=df$time)
+          Group=df$treat,
+          Time=df$time)
 
 grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-          strataName="Time",
-          colorScheme ="lowGreen"
- )
+         scoreName = "mRS",
+         strataName="Time"
+)
 
-  grottaBar(x,groupName="Time",
-          scoreName = "mRS",
-          strataName="Group",
-          colorScheme ="grayscale"
- )
+
+grottaBar(x,groupName="Time",
+         scoreName = "mRS",
+         strataName="Group",
+         textColor = c(rep("black",4),rep("white",3))
+)
+
 
 x <- table(mRS=df$mRS,
           Group=df$treat)
 
-   grottaBar(x,groupName="Group",
-             scoreName = "mRS",
-             colorScheme ="custom"
-   ) + ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 
-  grottaBar(x,groupName="Group",
-          scoreName = "mRS",
-          colorScheme ="custom",
-          textFace = "italic",
-          printNumbers = "count.percentage"
- ) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         colorScheme = FALSE
+)
 
-
-grottaBar(
-          x,
-          groupName = "Group",
-          scoreName = "mRS",
-          colorScheme = "custom",
-          textFace = "italic",
-          printNumbers = "count.percentage"
-) + viridis::scale_fill_viridis(discrete = TRUE, direction = -1)
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         colorScheme = ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
+)
 
 
 grottaBar(x,groupName="Group",
-           scoreName = "mRS",
-           colorScheme ="custom",
-           textFace = "italic",
-           textColor = c("black","white"),
-           textCut = 5,
-           printNumbers = "count.percentage"
-) + viridis::scale_fill_viridis(discrete = TRUE,direction = -1)
+         scoreName = "mRS",
+         colorScheme = FALSE
+)+ ggplot2::scale_fill_brewer(palette = "Spectral", direction=-1)
 
 
+grottaBar(x,groupName="Group",
+         scoreName = "mRS",
+         printNumbers = "count.percentage",
+         colorScheme = "Greys"
+)
+
+# Example with IPTW weights
+ 
+ alteplase_confounded <- alteplase
+ ps = c("0-90" = 0.7,
+        "91-180" = 0.6,
+        "181-270" = 0.3,
+        "271-360" = 0.7
+ )
+ set.seed(123)
+ alteplase_confounded <- by(alteplase_confounded,alteplase_confounded$time,function(x){
+ 
+         n_alt <- round(nrow(x)*ps[unique(x$time)])
+         n_pbo <- round(nrow(x)*(1-ps[unique(x$time)]))
+ 
+         this_probs <- prop.table(table(x$mRS,x$treat),margin=2)
+        
+        rbind(
+                data.frame(treat="Alteplase",
+                            mRS = sample(as.numeric(rownames(this_probs)),
+                                        size = n_alt, replace=TRUE,
+                                        prob=this_probs[,"Alteplase"]),
+                            time=unique(x$time)
+                            ),
+                data.frame(treat="Placebo",
+                            mRS = sample(as.numeric(rownames(this_probs)),
+                                        size = n_pbo, replace=TRUE,
+                                        prob=this_probs[,"Placebo"]),
+                            time=unique(x$time)
+                            )
+        )
+})
+alteplase_confounded <- do.call("rbind",alteplase_confounded)
+alteplase_confounded$treat <- factor(alteplase_confounded$treat,levels=levels(alteplase$treat))
+
+# Raw table, with confounding
+x_confounded <- xtabs(~ mRS + treat, data=alteplase_confounded) 
+
+# Using IPTW to remove confounding
+
+propensity <- ps[alteplase_confounded$time]
+alteplase_confounded$iptw_weight <- ifelse(alteplase_confounded$treat == "Alteplase",
+                                           1/propensity,
+                                           1/(1-propensity)
+                                          )
+x_weighted <- xtabs(iptw_weight ~ mRS + treat, data=alteplase_confounded) 
+
+grottaBar(x_confounded, groupName = "treat", scoreName = "mRS", printNumbers = "percentage")
+grottaBar(x_weighted, groupName = "treat", scoreName = "mRS",printNumbers = "percentage")
+
+# The original dataset for comparison
+x <- xtabs(~ mRS + treat, data=alteplase) 
+grottaBar(x, groupName = "treat", scoreName = "mRS", printNumbers = "percentage")
+
+}
+\references{
+National Institute of Neurological Disorders and Stroke rt-PA Stroke Study Group. "Tissue plasminogen activator for acute ischemic stroke." New England Journal of Medicine 333.24 (1995): 1581-1588.
+
+Rohmann, Jessica L., et al. "Adjusted horizontal stacked bar graphs ("Grotta bars") for consistent presentation of observational stroke study results." European Stroke Journal 8.1 (2023): 370-379. 
+
+Forrest, Meghan R., et al. "Use of stacked proportional bar graphs ("Grotta bars") in observational neurology research: a meta-research study." Neurology 104.4 (2025): e210169.
 }
